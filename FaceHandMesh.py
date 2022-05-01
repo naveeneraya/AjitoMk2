@@ -1,7 +1,6 @@
-import MyOpenCV_Functions
+
 import cv2
 import mediapipe as mp
-import My_MP_Pose_Manager
 import glm
 
 mp_drawing = mp.solutions.drawing_utils
@@ -61,13 +60,23 @@ with mp_holistic.Holistic(
         landmark_drawing_spec=None,
         connection_drawing_spec=mp_drawing_styles.get_default_hand_connections_style())
 
-    if showFaceLandmarks:
-        image = cv2.resize(image, (1920, 1080))
+    mp_drawing.draw_landmarks(
+        image,
+        results.left_hand_landmarks,
+        mp_holistic.HAND_CONNECTIONS,
+        landmark_drawing_spec=None,
+        connection_drawing_spec=mp_drawing_styles.get_default_hand_connections_style())
+
+    #if showFaceLandmarks:
+        #image = cv2.resize(image, (1920, 1080))
 
     eyeA0 = (0,0)
     eyeA1 = (0,0)
     eyeB0 = (0,0)
     eyeB1 = (0,0)
+
+    upperLip = (0,0)
+    bottomLip = (0,0)
 
     if results.face_landmarks:
         for id, lm in enumerate(results.face_landmarks.landmark):
@@ -91,22 +100,27 @@ with mp_holistic.Holistic(
                 eyeB0 = pt
             if id == 359:
                 eyeB1 = pt
+            if id == 13:
+                upperLip = pt
+            if id == 14:
+                bottomLip = pt
 
             if id == 130 or id == 243 or id == 463 or id == 359:
                 cv2.circle(image, pt, 5, (0, 255, 0), 2)
 
-    eyeCenterA = MyOpenCV_Functions.lineMidPointInt(eyeA1, eyeA0)
-    eyeCenterB = MyOpenCV_Functions.lineMidPointInt(eyeB1, eyeB0)
-    eyeAlength = glm.distance(eyeA0, eyeA1)
-    eyeBlength = glm.distance(eyeB0, eyeB1)
+
+    #eyeAlength = glm.distance(eyeA0, eyeA1)
+    #eyeBlength = glm.distance(eyeB0, eyeB1)
     #eyeARadius = int(eyeAlength/2.0)
     #eyeBradius = int(eyeBlength/2.0)
 
+    if glm.distance(upperLip, bottomLip) > 50:
+        showFaceLandmarks = False
+    if glm.distance(upperLip, bottomLip) < 5:
+        showFaceLandmarks = True
+
     eyeColor = (255,255,150)
     radius = 20
-    cv2.circle(image, eyeCenterA, radius, eyeColor, -1)
-    cv2.circle(image, eyeCenterB, radius, eyeColor, -1)
-
 
     # Flip the image horizontally for a selfie-view display.
     #cv2.imshow('MediaPipe Holistic', cv2.flip(image, 1))
